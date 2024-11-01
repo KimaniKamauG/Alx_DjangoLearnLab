@@ -1,5 +1,5 @@
 # Delete the book instance 
-
+from bookshelf.models import Book
 book.delete()
 
 # Try to retrieve all books to confirm there in none
