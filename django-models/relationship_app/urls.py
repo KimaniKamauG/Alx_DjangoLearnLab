@@ -2,7 +2,7 @@ from django.urls import path
 from .views import list_books, LibraryDetailView 
 from django.contrib.auth.views import LoginView, LogoutView
 from . import views 
-
+from . import admin_view, librarian_view, member_view
 urlpatterns = [
     path('', views.index, name='index'),
     path('books/', list_books, name='list_books'), # Function based view
@@ -13,5 +13,9 @@ urlpatterns = [
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('members/', views.member_view, name='members'),
     path('librarian/', views.librarian_view, name='librarian'),
-    path('adminview/', views.admin_view, name='adminview'),
+    path('admin/', views.admin_view, name='admin_view'),
+    path('admin/', admin_view.admin_view, name='admin_view'),
+    path('librarian/', librarian_view.librarian_view, name='librarian_view'),
+    path('member/', member_view.member_view, name='member_view'),
+
 ]
