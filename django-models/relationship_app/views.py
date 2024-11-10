@@ -1,15 +1,16 @@
-from django.shortcuts import render, redirect, HttpResponse
+from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from .models import Book, Author, Library, Librarian, UserProfile 
 from django.template import loader 
 from django.views.generic import DetailView, TemplateView, CreateView, UpdateView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm 
 from django.contrib.auth import login as auth_login, logout 
-from django.contrib.auth.decorators import login_required, user_passes_test  
+from django.contrib.auth.decorators import login_required, user_passes_test, permission_required 
 from django.contrib import messages 
 from django.urls import reverse_lazy 
 from django.views.generic import CreateView 
 from django.contrib.auth.models import User 
-from django.utils.decorators import method_decorator 
+from django.utils.decorators import method_decorator
+#from django.forms import BookForm  
 
 # Create your views here.
 
@@ -86,6 +87,32 @@ def librarian_view(request):
 @user_passes_test(lambda user: check_role(user, 'Member'))
 def member_view(request):
     return render(request, 'relationship_app/member_view.html')
+
+
+@permission_required('relationship_app.can_add_book', raise_exception=True)
+def add_book(request):
+    form = BookForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        return redirect('book_list')
+    return render(request, 'relationship_app/add_book.html', {'form': form})
+
+# View to edit an existing book
+@permission_required('relationship_app.can_change_book', raise_exception=True)
+def edit_book(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    form = BookForm(request.POST or None, instance=book)
+    if form.is_valid():
+        form.save()
+        return redirect('book_list')
+    return render(request, 'relationship_app/edit_book.html', {'form': form, 'book': book})
+
+# View to delete a book
+@permission_required('relationship_app.can_delete_book', raise_exception=True)
+def delete_book(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    book.delete()
+    return redirect('book_list')
 
 # # Function based view for listing all the books.
 # def list_books(request):
