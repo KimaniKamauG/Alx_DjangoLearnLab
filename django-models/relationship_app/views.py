@@ -4,13 +4,13 @@ from django.template import loader
 from django.views.generic import DetailView, TemplateView, CreateView, UpdateView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm 
 from django.contrib.auth import login as auth_login, logout 
-from django.contrib.auth.decorators import login_required, user_passes_test, permission_required 
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages 
 from django.urls import reverse_lazy 
 from django.views.generic import CreateView 
 from django.contrib.auth.models import User 
 from django.utils.decorators import method_decorator
-#from django.forms import BookForm  
+from django.contrib.auth.decorators import permission_required
 
 # Create your views here.
 
