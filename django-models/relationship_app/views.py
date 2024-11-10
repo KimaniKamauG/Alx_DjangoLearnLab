@@ -48,7 +48,7 @@ def list_books(request):
     context = {'books':books}
     return render(request, 'relationship_app/list_books.html', context)
 
-#CReating a class based view
+#Creating a class based view
 from .models import Library #the import statement is up on line 2 but I rewrite it here again
 from django.views.generic.detail import DetailView
 class LibraryDetailView(DetailView):
@@ -72,7 +72,20 @@ class ProfileView(TemplateView):
     template_name = 'relationship_app/profile.html'
 
 
+# Admin view
+@user_passes_test(lambda user: check_role(user, 'Admin'))
+def admin_view(request):
+    return render(request, 'relationship_app/admin_view.html')
 
+# Librarian view
+@user_passes_test(lambda user: check_role(user, 'Librarian'))
+def librarian_view(request):
+    return render(request, 'relationship_app/librarian_view.html')
+
+# Member view
+@user_passes_test(lambda user: check_role(user, 'Member'))
+def member_view(request):
+    return render(request, 'relationship_app/member_view.html')
 
 # # Function based view for listing all the books.
 # def list_books(request):
