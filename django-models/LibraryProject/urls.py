@@ -18,11 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView 
 from django.views.generic import RedirectView 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('relationship/', include('relationship_app.urls')),
-    path('accounts', include('django.contrib.auth.urls')),
-    path('', RedirectView.as_view(url='relationship/login/')),
+    path('bookshelf/', include('bookshelf.urls')),
+    path('relationship_app/', include('relationship_app.urls')),
+    path('accounts/', include('relationship_app.urls')),
+    #path('', RedirectView.as_view(url='relationship/login/')),
     #path('accounts/profile/', TemplateView.as_view(template_name='accounts/profile.html'), name='profile'),
     #path('signup/', SignUpView.as_view(), name='templates/registration/signup')
 

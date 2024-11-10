@@ -56,7 +56,7 @@ ROOT_URLCONF = 'LibraryProject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [ BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -124,7 +124,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-
-LOGIN_REDIRECT_URL = "list_books"
-LOGOUT_REDIRECT_URL ="login"
-LOGIN_URL = 'login'
+# To be removed slightly later
+LOGIN_REDIRECT_URL = "relationship_app/profile/"
+LOGOUT_REDIRECT_URL ="relationship_app/profile/"
+#LOGIN_URL = 'login'
