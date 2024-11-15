@@ -1,0 +1,1 @@
+This is a Django sample project of a Library.
