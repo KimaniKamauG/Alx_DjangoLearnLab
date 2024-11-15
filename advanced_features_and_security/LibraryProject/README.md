@@ -1,0 +1,1 @@
+This project takes care od Permissions and Groups in Django.
