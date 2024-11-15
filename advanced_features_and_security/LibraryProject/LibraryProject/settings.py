@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-g8hybro*4_z%b(luwrj!7up-c_)y1rjl*-#zphw5ep_d%2gln#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bookshelf.apps.BookshelfConfig',
     'relationship_app.apps.RelationshipAppConfig',
+    'csp',
 ]
 
 MIDDLEWARE = [
@@ -130,3 +131,29 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = "relationship_app/profile/"
 LOGOUT_REDIRECT_URL ="relationship_app/profile/"
 #LOGIN_URL = 'login'
+
+# Security Settings 
+# Ensure HTTP Strict Transport Security 
+SECURE_BROWSER_XSS_FILTER = True   # Prevent XSS attacks
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_HSTS_SECONDS = 31536000  # Enforce HTTPS for one year  
+SECURE_REDIRECT_EXEMPT = []
+SECURE_SSL_REDIRECT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking 
+
+CSP_DEFAULT_SRC = ["'self'"]
+CSP_STYLE_SRC = ["'self'", 'https:']
+CSP_SCRIPT_SRC = ["'self'"]
+CSP_IMG_SRC = ["'self'", 'data:']
+CSP_FONT_SRC = ["'self'", 'https:']
+
+CSRF_COOKIE_SECURE = True   # CSRF cookie sent only over HTTPS
+CSRF_COOKIE_HTTPONLY = True
+
+SESSION_COOKIE_SECURE = True # Session cookie sent only over HTTPS
+
+
