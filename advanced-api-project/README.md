@@ -51,6 +51,35 @@ This is a Project that involves the use of Django Rest Framework to perform the 
   
 - **Permissions**: The API uses DRF's built-in permission classes to restrict access to create, update, and delete operations to authenticated users.
 
+# Advanced API Project
+
+## Overview
+
+This project provides a RESTful API for managing books using Django REST Framework. The API supports CRUD operations and includes advanced query capabilities such as filtering, searching, and ordering.
+
+## API Endpoints
+
+### Books
+
+- **List Books**
+  - **Endpoint**: `GET /api/books/`
+  - **Description**: Retrieves a list of all books with filtering, searching, and ordering capabilities.
+  - **Permissions**: Open to all users (authenticated and unauthenticated).
+
+### Filtering
+
+You can filter the list of books by the following fields:
+
+- **title**: Filter books by title (case-insensitive).
+- **author**: Filter books by author (case-insensitive).
+- **published_year**: Filter books by the year of publication.
+
+#### Example Requests
+
+- **Filter by Title**:
+  ```bash
+  curl -X GET "http://localhost:8000/api/books/?title=Uoga"
+
 ## Testing the API
 
 You can test the API using tools like Postman or curl. Make sure to include authentication tokens for endpoints that require authentication. 
