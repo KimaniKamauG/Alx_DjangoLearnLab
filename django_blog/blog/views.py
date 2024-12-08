@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import AuthenticationForm 
 from django.contrib.auth import login, logout, authenticate 
 from django.contrib import messages 
-from .forms import RegistrationForm, CommentForm, PostForm 
+from .forms import RegistrationForm, CommentForm, PostForm, SearchForm 
 from django.contrib.auth.decorators import login_required 
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView 
 from django.views.generic import TemplateView 
@@ -236,4 +236,42 @@ def dummy(request):
 
 def commentdummy(request, pk):
     return render(request, 'comment_create.html', {'dummy':dummy})
+
+
+
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Q
+
+
+def search_view(request):
+    queryset = Post.objects.all()
+    form = SearchForm()
+
+    if request.method == "GET":
+        form = SearchForm(request.GET)
+        if form.is_valid():
+            query = form.cleaned_data['to_search']
+            searched_items = queryset.filter(Q(title__icontains=query)|Q(content__icontains=query))
+        else:
+            form = SearchForm()
+    context = {
+        'post_list': searched_items,
+        'search_form': form,
+    }
+    return render(request, 'search.html', context=context)
+
+def tag_view(request, tag_name):
+    tag = get_object_or_404(klass=Tag, name__iexact=tag_name)
+    post_by_tag = Post.objects.filter(Q(tags__name__icontains=tag.name))
+
+    context = {
+        'posts':post_by_tag,
+        'tag_name':tag_name
+    }
+
+    return render(request, 'tags.html', context=context)
+
+class PostByTagListView(ListView):
+    model = Post
+    template_name = 'tags.html'
 
