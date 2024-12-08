@@ -1,15 +1,19 @@
-from django.shortcuts import render, redirect 
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import AuthenticationForm 
 from django.contrib.auth import login, logout, authenticate 
 from django.contrib import messages 
-from .forms import RegistrationForm 
+from .forms import RegistrationForm, CommentForm, PostForm 
 from django.contrib.auth.decorators import login_required 
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView 
 from django.views.generic import TemplateView 
-from django.urls import reverse_lazy 
+from django.urls import reverse_lazy, reverse 
 from django.contrib.auth.models import User 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin 
-from .models import Post 
+from .models import Post, Comment 
+from django.http import HttpResponse, HttpResponseForbidden
+from typing import Any 
+from django.views import View 
+from django.contrib.auth.decorators import login_required, user_passes_test 
 
 # Create your views here.
 
@@ -142,3 +146,94 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         if self.request.user == post.author:
             return True
         return False 
+
+
+# Comments Section
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    form_class = CommentForm
+    template_name = 'post_detail.html'
+    model = Comment 
+
+    def form_valid(self, form):
+        '''
+        Handles the valid form submission, saves the comment and redirects.
+        '''
+        if not self.request.user.is_authenticated:
+            return HttpResponseForbidden('You must be logged in to comment.')
+        post = get_object_or_404(Post, pk=self.kwargs['pk'])
+        form.instance.post = post # Attaching the comment to the post.
+        form.instance.author = self.request.user  # Attach the comment to the user.
+        form.save()
+        return super().form_valid(form)
+    
+    def get_success_url(self) -> str:
+        return reverse('post-detail', kwargs={'pk': self.kwargs['pk']})
+    
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['post'] = self.get_objects().post 
+        return context 
+
+class CommentListView(ListView):
+    # A view to list all comments associated with a Post.
+    model = Comment 
+    template_name = 'blog/comment_list.html'
+    context_object_name = 'comment_list'
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    # A view for authenticated users to update their comments 
+    model = Comment 
+    template_name = 'blog/comment_update.html'
+    fields = ['content']
+
+    def test_func(self) -> bool | None:
+        return self.request.user == self.get_object().author
+    
+    def get_success_url(self) -> str:
+        return reverse('post-detail', kwargs={'pk': self.get_object().post.pk})
+    
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['post'] = self.get_object().post
+        return context
+    
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    template_name = 'blog/comment_delete.html'
+    success_url = reverse_lazy('post_list')
+
+    def test_func(self) -> bool | None:
+        return self.request.user == self.get_object().author
+    
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['post'] = self.get_object().post
+        return context
+
+
+class PostDetailCommentView(View):
+    def get(self, request, *args, **kwargs):
+        view = PostDetailView.as_view()
+        return view(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        view = CommentCreateView.as_view()
+        return view(request, *args, **kwargs)
+    
+
+
+@login_required
+@user_passes_test
+def dummy(request):
+    if request.method == "POST":
+        form = RegistrationForm(instance=request.user)
+        if form.is_valid():
+            form.save()
+    else:
+        form = RegistrationForm()
+
+    return render(request, 'post_list.html', {'dummy':dummy})
+
+def commentdummy(request, pk):
+    return render(request, 'comment_create.html', {'dummy':dummy})
+

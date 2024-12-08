@@ -1,11 +1,51 @@
 {% extends 'blog/base.html' %}
 
 {% block content %}
+<title>Post Detail</title>
     <h1>{{ post.title }}</h1>
     <p>{{ post.content }}</p>
     <P>Written by {{ post.author }}</P>
+    <p>Posted on: {{ post.published_date }}</p>
     {% if user == post.author %}
-        <a href="{% url 'post-update' post.pk %}">Update</a>
-        <a href="{% url 'post-delete' post.pk %}">Delete</a>
+        <a href="{% url 'post-update' post.pk %}">Edit</a>
+        <form action="{% url 'post-delete' post.pk %}" method="POST" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">Delete</button>
+        </form>
+
+        <!-- Render the comment form -->
+        <h2>Comments</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ comment_form }}
+            <button type="submit">Add comment</button>
+        </form>
+
+    {% else %}
+        <form method="POST">
+            {% csrf_token %}
+            {{ comment_form }}
+            <button type="submit">Add comment</button>
+        </form>
+
+        <a href="{% url 'posts' %}">Back to Posts</a>
+    {% endif %}
+
+    <!-- Render existing comments -->
+     <h2>Comments</h2>
+    {% if post.post_comments.all %}
+        <ul>
+            {% for comment in post.post_comments.all %}
+                <li>
+                    <strong>{{ comment.author }}</strong> ({{ comment.created_at }}):<br>
+                    {{ comment.content }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No comments found.</p>
     {% endif %}
 {% endblock %}
+
+
+
