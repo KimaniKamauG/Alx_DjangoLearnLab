@@ -11,15 +11,14 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['email', 'username', 'bio', 'profile_picture']
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        user = get_user_model().create_user(**validated_data)
         token, create = Token.objects.create(user=user)
         return {'user': user, 'token': token.key}
     
 
 class LoginSerializer(serializers.Serializer):
-    class Meta:
-        model = User 
-        fields = ['email', 'password']
+    email = serializers.EmailField()
+    password = serializers.CharField()
 
     def validate(self, attrs):
         email = attrs.get('email')
