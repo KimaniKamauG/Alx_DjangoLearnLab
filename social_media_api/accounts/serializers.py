@@ -7,11 +7,11 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = get_user_model()
         fields = ['email', 'username', 'bio', 'profile_picture']
 
     def create(self, validated_data):
-        user = get_user_model().create_user()
+        user = get_user_model().create_user(validated_data)
         token, create = Token.objects.create(user=user)
         return {'user': user, 'token': token.key}
     
