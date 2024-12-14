@@ -8,7 +8,7 @@ User = get_user_model()
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='posts')
     title = models.CharField(max_length=20)
-    content = models.TextField(max_length=800)
+    content = models.TextField()
     created_at = models.DateTimeField(auto_now=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
