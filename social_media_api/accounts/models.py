@@ -28,8 +28,8 @@ class User(AbstractUser):
     username = models.CharField(unique=False, max_length=28)
     bio = models.TextField(max_length=500, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pictures', blank=True, null=True)
-    followers = models.ManyToManyField('self', blank=True, related_name='followers_users')
-    following = models.ManyToManyField('self', blank=True, related_name='following_users')
+    followers = models.ManyToManyField('self', blank=True, symmetrical=False, related_name='followers_users')
+    following = models.ManyToManyField('self', blank=True, symmetrical=False, related_name='following_users')
 
     groups = models.ManyToManyField(
         'auth.Group',

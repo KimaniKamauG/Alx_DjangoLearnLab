@@ -60,10 +60,12 @@ from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import get_user_model 
 from rest_framework.authtoken.views import ObtainAuthToken
 from .models import UserProfile
+from rest_framework import generics, permissions, mixins 
 
 User = get_user_model()
 
-class RegisterView(APIView):
+'CustomUser.objects.all()'
+class RegisterView(generics.GenericAPIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -71,7 +73,7 @@ class RegisterView(APIView):
             return Response(serializer.data, status= status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class LoginView(APIView):
+class LoginView(generics.GenericAPIView):
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
         if serializer.is_valid():
@@ -96,7 +98,7 @@ class CustomAuthToken(ObtainAuthToken):
 
 
     
-class ProfileView(APIView):
+class ProfileView(generics.GenericAPIView):
     def get(self, request):
         user = request.user
         serializer = UserSerializer(user)
@@ -110,7 +112,7 @@ class ProfileView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class ProfileUpdateView(APIView):
+class ProfileUpdateView(generics.GenericAPIView):
     def put(self, request, pk):
         user_profile = UserProfile.objects.get(pk=pk)
         serializer = UserProfileSerializer(user_profile, data=request.data, partial=True)
@@ -120,7 +122,7 @@ class ProfileUpdateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.IsAuthenticated])
 def follow_user(request, pk):
     user_to_follow = get_object_or_404(User, id=pk)
     if not request.user.following.filter(id=pk).exists():
@@ -132,7 +134,7 @@ def follow_user(request, pk):
 
 
 class FollowView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         user_to_follow = get_object_or_404(User, id=pk)
@@ -143,15 +145,15 @@ class FollowView(APIView):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([permissions.IsAuthenticated])
 def unfollow_user(request, user_id):
     user_to_unfollow = get_object_or_404(User, id=user_id)
     request.user.following.remove(user_to_unfollow)
     user_to_unfollow.followers.remove(request.user)
     return redirect('profile')
 
-class UnfollowView(APIView):
-    permission_classes = [IsAuthenticated]
+class UnfollowView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, user_id):
         user_to_unfollow = get_object_or_404(User, id=user_id)

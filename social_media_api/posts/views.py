@@ -1,14 +1,17 @@
 from django.shortcuts import render
-from rest_framework import viewsets
+#from rest_framework import viewsets
 from .serializers import PostSerializer, CommentSerializer 
 from .models import Post, Comment 
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView,  UpdateAPIView, DestroyAPIView
+#from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView,  UpdateAPIView, DestroyAPIView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, PermissionRequiredMixin
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
-from rest_framework import filters 
+from rest_framework import filters
+
+from rest_framework import generics, permissions, mixins
+from django.core.exceptions import PermissionDenied 
 
 # Create your views here.
 class PostPagination(PageNumberPagination):
@@ -17,10 +20,10 @@ class PostPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class PostListView(ListAPIView):
+class PostListView(generics.ListAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer 
-    permission_classes = ['IsAuthenticatedOrReadOnly']
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = PostPagination
     filter_backends = [filters.SearchFilter]
     def get(self, request):
@@ -39,25 +42,25 @@ class PostListView(ListAPIView):
     #     return queryset
     
 # Create View of the Posts API
-class PostCreateView(CreateAPIView):
+class PostCreateView(generics.CreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = ['IsAuthenticatedOrReadOnly']
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-class PostUpdateView(UpdateAPIView, LoginRequiredMixin, UserPassesTestMixin):
+class PostUpdateView(generics.UpdateAPIView, LoginRequiredMixin, UserPassesTestMixin):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = ['IsAuthenticatedOrReadOnly']
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def test_func(self):
         obj = self.get_object()
         return obj.author == self.request.user
     
 
-class PostDetailView(ListAPIView):
+class PostDetailView(generics.ListAPIView):
     def get(self, request):
         post = Post.objects.all().get(id=request.data['id'])
         serializer = PostSerializer(post)
@@ -65,10 +68,10 @@ class PostDetailView(ListAPIView):
 
 
 
-class PostDeleteView(DestroyAPIView, LoginRequiredMixin, UserPassesTestMixin):
+class PostDeleteView(generics.DestroyAPIView, LoginRequiredMixin, UserPassesTestMixin):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = ['IsAuthenticatedOrReadOnly']
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def delete(self, request, pk):
         post = self.get_object(pk)
@@ -78,10 +81,10 @@ class PostDeleteView(DestroyAPIView, LoginRequiredMixin, UserPassesTestMixin):
     
 
 
-class PostSearchView(ListAPIView):
+class PostSearchView(generics.ListAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = ['IsAuthenticatedOrReadOnly']
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self, request):
         search_term = request.GET.get('search_term')
@@ -96,7 +99,7 @@ class CommentPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
-class CommentListView(ListAPIView):
+class CommentListView(generics.ListAPIView):
     pagination_class = CommentPagination
     filter_backends = [filters.SearchFilter]
 
@@ -109,7 +112,7 @@ class CommentListView(ListAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
-class CommentCreateView(CreateAPIView, LoginRequiredMixin, UserPassesTestMixin):
+class CommentCreateView(generics.CreateAPIView, LoginRequiredMixin, UserPassesTestMixin):
     serializer_class = CommentSerializer
 
     def post(self, request):
@@ -119,7 +122,7 @@ class CommentCreateView(CreateAPIView, LoginRequiredMixin, UserPassesTestMixin):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class CommentUpdateView(UpdateAPIView, LoginRequiredMixin, UserPassesTestMixin):
+class CommentUpdateView(generics.UpdateAPIView, LoginRequiredMixin, UserPassesTestMixin):
     def post(self, request):
         serializer  = CommentSerializer(data=request.data, partial=True)
         if serializer.is_valid():
@@ -132,16 +135,16 @@ class CommentUpdateView(UpdateAPIView, LoginRequiredMixin, UserPassesTestMixin):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
-class CommentDetailView(ListAPIView, LoginRequiredMixin, UserPassesTestMixin):
+class CommentDetailView(generics.ListAPIView, LoginRequiredMixin, UserPassesTestMixin):
     def get(self, request):
         comment = Comment.objects.all().get(id=request.data['id'])
         serializer = CommentSerializer(comment)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-class CommentDeleteView(DestroyAPIView, LoginRequiredMixin, UserPassesTestMixin):
+class CommentDeleteView(generics.DestroyAPIView, LoginRequiredMixin, UserPassesTestMixin):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = ['IsAuthenticatedOrReadOnly']
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def delete(self, request, pk):
         comment = self.get_object(pk)
@@ -150,10 +153,10 @@ class CommentDeleteView(DestroyAPIView, LoginRequiredMixin, UserPassesTestMixin)
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
-class FeedView(ListAPIView):
+class FeedView(generics.ListAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = ['IsAuthenticated']
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         following_users = self.request.users.followers.all()
