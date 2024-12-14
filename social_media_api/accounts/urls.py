@@ -13,11 +13,15 @@
 
 from django.urls import path 
 from rest_framework.authtoken import views
-from .views import RegisterView, LoginView, ProfileView
+from .views import RegisterView, LoginView, ProfileView, follow_user, unfollow_user, CustomAuthToken
+
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('profile/', ProfileView.as_view(), name='profile'),
-    path('token/', views.obtain_auth_token),
+    path('token/', CustomAuthToken.as_view(), name='token'),
+
+    path('follow/<int:user_id>/', follow_user, name='follow_user'),
+    path('unfollow/<int:user_id>/', unfollow_user, name='unfollow_user'),
 ]

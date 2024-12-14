@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.dispatch import receiver 
+from django.db.models.signals import post_save 
+
+
 # Create your models here.
 class UserManager(BaseUserManager):
     def create_user(self, email, password):
@@ -24,7 +28,8 @@ class User(AbstractUser):
     username = models.CharField(unique=False, max_length=28)
     bio = models.TextField(max_length=500, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pictures', blank=True, null=True)
-    followers = models.ManyToManyField('self', blank=True)
+    followers = models.ManyToManyField('self', blank=True, related_name='followers_users')
+    following = models.ManyToManyField('self', blank=True, related_name='following_users')
 
     groups = models.ManyToManyField(
         'auth.Group',
@@ -45,4 +50,18 @@ class User(AbstractUser):
     objects = UserManager()
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    email = models.EmailField(max_length=255)
+    image = models.ImageField(default='default.jpg', upload_to='profile_pictures', blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.user.username} Profile'
     
+@receiver(post_save, sender=User)
+def create_profile(sender, instance, created, **kwargs):
+    if created:
+        user_profile = UserProfile.objects.create(user=instance)
+        user_profile.save() 
+

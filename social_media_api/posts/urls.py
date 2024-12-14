@@ -1,5 +1,5 @@
 from django.urls import path, include 
-from .views import PostListView, PostCreateView, PostDetailView, PostDeleteView, PostUpdateView, PostSearchView, CommentViewSet
+from .views import PostListView, PostCreateView, PostDetailView, PostDeleteView, PostUpdateView, PostSearchView, FeedView 
 from rest_framework.routers import DefaultRouter
 
 # router = DefaultRouter()
@@ -16,8 +16,10 @@ urlpatterns = [
     path('post/<int:pk>/update/', PostUpdateView.as_view(), name='post_update'),
     path('post/search/<slug:search_term>', PostSearchView.as_view(), name='post_search'),
 
+    path('feed/', FeedView.as_view(), name='feed'),
 
-    path('comments/<int:pk>/', CommentViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
+
+    #path('comments/<int:pk>/', CommentViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
 
 
 ]

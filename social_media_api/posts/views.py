@@ -91,17 +91,87 @@ class PostSearchView(ListAPIView):
         return results 
 
 
+class CommentPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
+class CommentListView(ListAPIView):
+    pagination_class = CommentPagination
+    filter_backends = [filters.SearchFilter]
 
+    def get(self, request, **kwargs):
+        pk = self.kwargs['pk']
+        post = Post.objects.get(id=pk)
+        comments = Comment.objects.filter(post=post)
+        paginated_comments = CommentPagination().paginate_queryset(queryset=comments, request=request)
+        serializer = CommentSerializer(paginated_comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
+class CommentCreateView(CreateAPIView, LoginRequiredMixin, UserPassesTestMixin):
+    serializer_class = CommentSerializer
 
+    def post(self, request):
+        serializer  = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class CommentUpdateView(UpdateAPIView, LoginRequiredMixin, UserPassesTestMixin):
+    def post(self, request):
+        serializer  = CommentSerializer(data=request.data, partial=True)
+        if serializer.is_valid():
+            comment = Comment.objects.get(id=request.data['pk'])
+            if self.user != request.user:
+                raise PermissionDenied('Author is the only one allowed to edit.')
+            if comment.author == request.user:
+                serializer.update(Comment, serializer.validated_data)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
-
-class CommentViewSet(viewsets.ModelViewSet):
+class CommentDetailView(ListAPIView, LoginRequiredMixin, UserPassesTestMixin):
+    def get(self, request):
+        comment = Comment.objects.all().get(id=request.data['id'])
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class CommentDeleteView(DestroyAPIView, LoginRequiredMixin, UserPassesTestMixin):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = ['IsAuthenticatedOrReadOnly']
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    def delete(self, request, pk):
+        comment = self.get_object(pk)
+        if comment.author == request.user:
+            comment.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    
+class FeedView(ListAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = ['IsAuthenticated']
+
+    def get_queryset(self):
+        following_users = self.request.users.followers.all()
+        return Post.objects.filter(author__in=following_users).order_by('-created_at')
+
+
+
+
+
+
+
+
+
+# class CommentViewSet(viewsets.ModelViewSet):
+#     queryset = Comment.objects.all()
+#     serializer_class = CommentSerializer
+#     permission_classes = ['IsAuthenticatedOrReadOnly']
+
+#     def perform_create(self, serializer):
+#         serializer.save(author=self.request.user)
 
