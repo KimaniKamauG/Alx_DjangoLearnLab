@@ -1,9 +1,9 @@
 from django.shortcuts import render
 #from rest_framework import viewsets
-from .serializers import PostSerializer, CommentSerializer 
-from .models import Post, Comment 
+from .serializers import PostSerializer, CommentSerializer, LikeSerializer 
+from .models import Post, Comment, Like 
 #from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView,  UpdateAPIView, DestroyAPIView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
@@ -11,7 +11,12 @@ from django.db.models import Q
 from rest_framework import filters
 
 from rest_framework import generics, permissions, mixins
-from django.core.exceptions import PermissionDenied 
+from django.core.exceptions import PermissionDenied
+
+from notifications.models import Notification
+from django.shortcuts import get_object_or_404 
+from django.db.models.signals import post_save 
+from django.dispatch  import receiver 
 
 # Create your views here.
 class PostPagination(PageNumberPagination):
@@ -161,6 +166,48 @@ class FeedView(generics.ListAPIView):
     def get_queryset(self):
         following_users = self.request.users.following.all()
         return Post.objects.filter(author__in=following_users).order_by('-created_at')
+
+class LikePostView(generics.CreateAPIView):
+    queryset = Like.objects.all()
+    serializer_class = LikeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        post_id = self.kwargs['pk']
+        post = generics.get_object_or_404(Post, pk=post_id)
+        Like.objects.get_or_create(user=self.request.user, post=post)
+        if Like.objects.filter(user=self.request.user, post=post).exists():
+            # Showing post is already liked by the user 
+            return Response({'error': 'Seems you have liked this post already'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data={'post': post, 'user': self.request.user})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@receiver(post_save, sender=Like)
+def send_notification(sender, instance, **kwargs):
+    liker = instance.user
+    post = instance.post
+
+    # Create a notification for the post owner
+    Notification.objects.create(
+        user=liker, # This is the recipient.
+        message=f'{liker.username} liked your post: {post.title}',  # Notification message 
+        link=post.get_absolute_url()  # Link to the post 
+    )
+
+class UnlikePostView(generics.DestroyAPIView):
+    queryset = Like.objects.all()
+    serializer_class = LikeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, pk):
+        like = get_object_or_404(Like, post__pk=pk, user=self.request.user)
+        like.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
 
 
 
