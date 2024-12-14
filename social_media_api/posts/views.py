@@ -173,13 +173,13 @@ class LikePostView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        #post_id = self.kwargs['pk']
-        post = generics.get_object_or_404(Post, pk=pk)
-        Like.objects.get_or_create(user=request.user, post=post)
-        if Like.objects.filter(user=request.user, post=post).exists():
+        post_id = self.kwargs['pk']
+        post = generics.get_object_or_404(Post, pk=post_id)
+        Like.objects.get_or_create(user=self.request.user, post=post)
+        if Like.objects.filter(user=self.request.user, post=post).exists():
             # Showing post is already liked by the user 
             return Response({'error': 'Seems you have liked this post already'}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.get_serializer(data={'post': post, 'user': request.user})
+        serializer = self.get_serializer(data={'post': post, 'user': self.request.user})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
