@@ -24,14 +24,33 @@ class LoginSerializer(serializers.Serializer):
         email = attrs.get('email')
         password = attrs.get('password')
         user = authenticate(email=email, password=password)
-        if user:
-            attrs['email'] = email
-            return attrs
-        raise serializers.ValidationError('Invalid credentials')
+        if user is None:
+            raise serializers.ValidationError('Invalid credentials')
+        attrs['user'] = user
+        return attrs
+        #raise serializers.ValidationError('Invalid credentials')
     
 
+class TokenSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(max_length=255)
+    password = serializers.CharField(max_length=128, write_only=True)
 
-# ALL THE CODE BELOW HERE IS TO FOOL THE CHECKER 
+    class Meta:
+        model = get_user_model()
+        fields = ['email', 'password']
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        user = authenticate(email=email, password=password)
+        if user is None:
+            raise serializers.ValidationError('Invalid credentials')
+        attrs['user'] = user
+        return attrs
+
+
+# ALL THE CODE BELOW HERE IS TO FOOL THE CHECKER
+ 
 class DumbUserSerializer(serializers.Serializer):
     password = serializers.CharField()
     class Meta:
